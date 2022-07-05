@@ -76,7 +76,7 @@ person5 = 0b1110
 
 together1 = person1 & person2 & person3 & person4 & person5
 together2 = person1 | person2 | person3 | person4 | person5
-# print(bin(together2)[2:])
+print(bin(together2)[2:])
 
 READ = 0b1000
 WRITE = 0b0100

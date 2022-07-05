@@ -6,16 +6,25 @@ BK = 0b00000000000000000000000000000000
 RP = 0b11111111111100000000000000000000
 RK = 0b00000000000000000000000000000000
 
-def make_move(piece_type, piece_index, move):
+def make_move(piece_board, piece_type, piece_index, move):
+    
     if (move == "FR"):
-        move_to_index = piece_index +
-    if (BK | (1<<move_to_index) and BP | (1<<move_to_index) and RP | (1<<move_to_index) and RK | (1<<move_to_index)):
-        piece_type ^= 1 << piece_index
-        piece_type ^= 1 << move_to_index
-        return piece_type
+        move_to_index = piece_index - 4
+    elif(move == "FL"):
+        move_to_index = piece_index - 6
+    elif(move == "BR" and piece_type == "BK" or piece_type == "RK"):
+        move_to_index = piece_index + 4
+    elif(move == "FL" and piece_type == "BK" or piece_type == "RK"):
+        move_to_index = piece_index + 6
 
-print("before function: ", bin(RP)[2:])
-print("after function:  ", bin(make_move(RP, 19, 23))[2:])
+    if (BK | (1<<move_to_index) and BP | (1<<move_to_index) and RP | (1<<move_to_index) and RK | (1<<move_to_index)):
+        piece_board ^= 1 << piece_index
+        piece_board ^= 1 << move_to_index
+        return piece_board
+
+RK = 0b11111111011110000000000000000000
+print("before function: ", bin(RK)[2:])
+print("after function:  ", bin(make_move(RK, "RK", 19, "BR"))[2:])
 
 '''
 board = []
@@ -41,12 +50,16 @@ if (RP | (1<<19)):
     RP ^= 1 << 23
 
 print(bin(RP)[2:].zfill(32)) 
-# 0b01010101  0b1111  0b11111111011110000000000000000000
-#   10101010    1111 
-#   00010101    0111 
-#   10000000    1000 
-#   00000000    0000
-#   10101010    0000
-#   01010101    0000
-#   10101010    0000
+0b11111111011100100000000000000000        
+
+0b0101010110101010000101010010000000000000000000000000000000000000
+
+0b1111 0b11111111011110000000000000000000
+  1111
+  1111
+  0000   
+  0000   
+  0000   
+  0000   
+  0000   
 '''

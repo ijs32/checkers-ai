@@ -38,11 +38,11 @@ def make_move(piece_board, piece_type, piece_index, move):
         return piece_board
 
 # RK = 0b11111111011110000000000000000000
-print("before function:   ", bin(r_k)[2:].zfill(32))
-print("after function:    ", bin(make_move(r_k, "RK", 22, "FR"))[2:].zfill(32))
-print("After function RP: ", bin(r_p)[2:].zfill(32))
-print("After function BK: ", bin(b_k)[2:].zfill(32))
-print("After function BP: ", bin(b_p)[2:].zfill(32))
+# print("before function:   ", bin(r_k)[2:].zfill(32))
+# print("after function:    ", bin(make_move(r_k, "RK", 22, "FR"))[2:].zfill(32))
+# print("After function RP: ", bin(r_p)[2:].zfill(32))
+# print("After function BK: ", bin(b_k)[2:].zfill(32))
+# print("After function BP: ", bin(b_p)[2:].zfill(32))
 
 # testing stuff 
 

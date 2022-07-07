@@ -1,9 +1,25 @@
-import os
-import numpy as np
+n1 = 0b000000000001
+n2 = 0b000000000000
+n3 = 0b00000000000
+n4 = 0b00000000000
 
-n1 = 23477
-n2 = 31213
+board = [
+    0b00000000000000000000000000000000, # red king 32 bit board
+    0b11111111111100000000000000000000, # red piece 32 bit board
+    0b00000000000000000000000000000000, # black king 32 bit board
+    0b00000000000000000000111111111111  # black piece 32 bit board
+] 
 
+new_board = board.copy()
+
+for i in range(28, 32):
+    print(i)
+if n1 & (1<< 0):
+    n1 ^= 1 << 0
+    n2 ^= 1 << 0
+
+print(bin(n1)[2:].zfill(12))
+print(bin(n2)[2:].zfill(12))
 # print(bin(n1)[2:])
 # print(bin(n2)[2:])
 
@@ -26,8 +42,9 @@ n2 = 31213
 # =  =  =  =
 # 0  1  1  1
 
-# n3 = n1 | n2
 
+game_on = True if ((n1 | n2) or (n3 | n4)) else False
+print(game_on)
 # print("OR operator")
 # print("number {} is {} in binary".format(n3, bin(n3)[2:]))
 

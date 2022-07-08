@@ -1,12 +1,16 @@
-from MySQLConn import conn
-
+from MySQLConn import cnx
 BITMASK = 0b11111111111111111111111111111111
 board = [
-    0b00000000000000000000000000000000, # red king 32 bit board
     0b11111111111100000000000000000000, # red piece 32 bit board
+    0b00000000000000000000000000000000, # red king 32 bit board
     0b00000000000000000000000000000000, # black king 32 bit board
     0b00000000000000000000111111111100  # black piece 32 bit board
-] 
+]
+def initialize_game():
+    conn = cnx.cursor()
+    ins_game_query = "INSERT INTO `Game` (winning_team) VALUES ('IN PROGRESS');"
+    conn.execute(ins_game_query)
+    cnx.close
 
 def make_move(piece_index, move_to_index):
     # movement will of course be different as it is relative to starting position
@@ -29,16 +33,24 @@ def make_move(piece_index, move_to_index):
     #         move_to_index = piece_index - 4
     #     elif(move == "FL" and piece_type == "BK"):
     #         move_to_index = piece_index - 6
-    def boardDB():
+    def board_into_DB():
+        conn = cnx.cursor()
+        game_id = conn.execute("SELECT game_id FROM Game ORDER BY game_id DESC LIMIT 1;")
+        ins_turn_query = """INSERT INTO `Turns` (game_id, red_piece_board, red_king_board, red_team_points, black_piece_board, black_king_board, black_team_points)
+        VALUES ({}, {}, {}, {}, {}, {}, {});""".format(game_id, board[0], board[1], 1, board[2], board[3], 1)
+        conn.execute(ins_turn_query)
+        cnx.close
+
     def king_me(board):
         for i in range(4):
-            if (board[1] & (1<<i)):
-                board[1] ^= 1 << i
+            if (board[0] & (1<<i)):
                 board[0] ^= 1 << i
+                board[1] ^= 1 << i
         for i in range(28, 32):
-            if (board[3] & (1<<i)):
-                board[3] ^= 1 << i
+            if (board[2] & (1<<i)):
                 board[2] ^= 1 << i
+                board[3] ^= 1 << i
+        board_into_DB()
         
     if ((((board[0] | board[1] | board[2] | board[3]) ^ BITMASK) & (1<<move_to_index))):
         if (board[0] & (1<<piece_index)):
@@ -63,13 +75,13 @@ def print_board():
     positions = {}
     for i in range(32):
         if (board[0] & (1<<i)):
-            positions["piece{0}".format(i)] = "RK"
-        elif(board[1] & (1<<i)):
             positions["piece{0}".format(i)] = "RP"
+        elif(board[1] & (1<<i)):
+            positions["piece{0}".format(i)] = "RK"
         elif(board[2] & (1<<i)):
-            positions["piece{0}".format(i)] = "BK"
-        elif(board[3] & (1<<i)):
             positions["piece{0}".format(i)] = "BP"
+        elif(board[3] & (1<<i)):
+            positions["piece{0}".format(i)] = "BK"
         else:
             positions["piece{0}".format(i)] = "**"
             
@@ -141,7 +153,7 @@ def print_board():
     |________|________|________|________|________|________|________|________|
     ''')
 
-
+initialize_game()
 print_board()
 game_on = True
 while game_on:
@@ -162,90 +174,4 @@ while game_on:
 
 
 
-# non destroyed version of board
-'''
-    -------------------------------------------------------------------------
-    |        |31******|        |30******|        |29******|        |28******|
-    |        |***31***|        |***30***|        |***29***|        |***28***|
-    |        |********|        |********|        |********|        |========|
-    |________|________|________|________|________|________|________|________|
-    |27******|        |26******|        |25******|        |24******|        |
-    |***27***|        |***26***|        |***25***|        |***24***|        |
-    |********|        |********|        |********|        |********|        |
-    |________|________|________|________|________|________|________|________|
-    |        |23******|        |22******|        |21******|        |20******|
-    |        |***23***|        |***22***|        |***21***|        |***20***|
-    |        |========|        |========|        |========|        |========|
-    |________|________|________|________|________|________|________|________|
-    |19******|        |18******|        |17******|        |16******|        |
-    |***19***|        |***18***|        |***17***|        |***16***|        |
-    |********|        |********|        |********|        |********|        |
-    |________|________|________|________|________|________|________|________|
-    |        |15******|        |14******|        |13******|        |12******|
-    |        |***15***|        |***14***|        |***13***|        |***12***|
-    |        |========|        |========|        |========|        |========|
-    |________|________|________|________|________|________|________|________|
-    |11******|        |10******|        |09******|        |08******|        |
-    |***11***|        |***10***|        |***09***|        |***08***|        |
-    |********|        |********|        |********|        |********|        |
-    |________|________|________|________|________|________|________|________|
-    |        |07******|        |06******|        |05******|        |04******|
-    |        |***07***|        |***06***|        |***05***|        |***04***| 
-    |        |========|        |========|        |========|        |========|
-    |________|________|________|________|________|________|________|________|
-    |03******|        |02******|        |01******|        |00******|        |
-    |***03***|        |***02***|        |***01***|        |***00***|        |
-    |********|        |********|        |********|        |********|        |
-    |________|________|________|________|________|________|________|________|
-'''
 
-'''
-
-BP = 0b11111111101111111111111111111111
-BK = 0b11111111101111111111111111111111
-RP = 0b11111111101111111111111111111111
-RK = 0b11111111101111111111111111111111
-
-print("this is RP: ", (bin(RP)[2:].zfill(32)))
-print("this is length: ", (len(bin(RP)[2:].zfill(32))))
-for i in range(len(bin(RP)[2:].zfill(32))):
-    if ((((RP | RK | BP | BK) ^ BITMASK) & (1<<i))):
-        print("this is the 0: ", i)
-    else:
-        print("this is the 1: ", i)
-board = []
-print(len(bin(RP)[2:]))
-for i in range(len(bin(RP)[2:])):
-    board.append(0)
-    if (RP & (1<<i)):
-        board.append("RP")
-    if(BP & (1<<i)):
-        board.append("BP")
-    if(RK & (1<<i)):
-        board.append("RK")
-    if(BK & (1<<i)):
-        board.append("BK")
-print("this is board: ", board)
-print("combined board: ", bin(BP ^ BK ^ RP ^ RK))
-# print(bin(BP)[2:].zfill(32))
-# BP ^= 1 << 31
-# print(bin(BP)[2:].zfill(32))
-print(bin(RP)[2:].zfill(32)) 
-if (RP | (1<<19)):
-    RP ^= 1 << 19
-    RP ^= 1 << 23
-
-print(bin(RP)[2:].zfill(32)) 
-0b11111111011100100000000000000000        
-
-0b0101010110101010000101010010000000000000000000000000000000000000
-
-0b1111 0b11111111011110000000000000000000
-  1111
-  1111
-  0000   
-  0000   
-  0000   
-  0000   
-  0000   
-'''

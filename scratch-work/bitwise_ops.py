@@ -4,22 +4,31 @@ n3 = 0b00000000000
 n4 = 0b00000000000
 
 board = [
-    0b00000000000000000000000000000000, # red king 32 bit board
+    0b10000000000000000000000000000000, # red king 32 bit board
     0b11111111111100000000000000000000, # red piece 32 bit board
     0b00000000000000000000000000000000, # black king 32 bit board
     0b00000000000000000000111111111111  # black piece 32 bit board
 ] 
 
 new_board = board.copy()
+new_board[0] = 2
 
-for i in range(28, 32):
-    print(i)
-if n1 & (1<< 0):
-    n1 ^= 1 << 0
-    n2 ^= 1 << 0
+print(board)
+print(new_board)
+# for i in range(28, 32):
+#     print(i)
+# if n1 & (1<< 0):
+#     n1 ^= 1 << 0
+#     n2 ^= 1 << 0
 
-print(bin(n1)[2:].zfill(12))
-print(bin(n2)[2:].zfill(12))
+print("combined boards: ", board[0] + board[1])
+print("single board:    ", board[1])
+
+before_turn = 1
+after_turn = board[2]
+
+if(before_turn and after_turn):
+    print("hello")
 # print(bin(n1)[2:])
 # print(bin(n2)[2:])
 
@@ -44,7 +53,7 @@ print(bin(n2)[2:].zfill(12))
 
 
 game_on = True if ((n1 | n2) or (n3 | n4)) else False
-print(game_on)
+# print(game_on)
 # print("OR operator")
 # print("number {} is {} in binary".format(n3, bin(n3)[2:]))
 
@@ -93,15 +102,15 @@ person5 = 0b1110
 
 together1 = person1 & person2 & person3 & person4 & person5
 together2 = person1 | person2 | person3 | person4 | person5
-print(bin(together2)[2:])
+# print(bin(together2)[2:])
 
 READ = 0b1000
 WRITE = 0b0100
 EXECUTE = 0b0010
 CHANGE_POLICY = 0b0001
 
-def myFunction(permission):
-    print(bin(permission)[2:])
+# def myFunction(permission):
+    # print(bin(permission)[2:])
 
 # myFunction(READ | WRITE)
 
@@ -117,11 +126,11 @@ def myFunction(permission):
 
 #using bitwise to check even or odd
 
-random_number = 89234759241
-if random_number & 1 == 0:
-    print("even")
-else:
-    print("odd")
+# random_number = 89234759241
+# if random_number & 1 == 0:
+#     print("even")
+# else:
+#     print("odd")
 
 # non destroyed version of board
 '''

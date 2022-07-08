@@ -1,18 +1,61 @@
+import numpy as np
 from MySQLConn import cnx
 BITMASK = 0b11111111111111111111111111111111
 board = [
     0b11111111111100000000000000000000, # red piece 32 bit board
     0b00000000000000000000000000000000, # red king 32 bit board
-    0b00000000000000000000000000000000, # black king 32 bit board
-    0b00000000000000000000111111111100  # black piece 32 bit board
+    0b00000000000000000000111111111111, # black piece 32 bit board
+    0b00000000000000000000000000000000  # black king 32 bit board
 ]
 def initialize_game():
-    conn = cnx.cursor()
+    db = cnx.cursor()
     ins_game_query = "INSERT INTO `Game` (winning_team) VALUES ('IN PROGRESS');"
-    conn.execute(ins_game_query)
-    cnx.close
+    
+    db.execute(ins_game_query)
+    cnx.commit()
 
-def make_move(piece_index, move_to_index):
+def training_data_into_DB(before_move, board, turn):
+    turns_set = False
+    if turn == 'R':
+        if before_move[0] != board[0]:
+            before_turn = before_move[0]
+            after_turn  =  board[0]
+            turns_set = True
+        elif before_move[1] != board[1]:
+            before_turn = before_move[1]
+            after_turn  =  board[1]        
+            turns_set = True
+    elif turn == 'B':
+        if before_move[2] != board[2]:
+            before_turn = before_move[2]
+            after_turn  =  board[2]
+            turns_set = True
+        elif before_move[3] != board[3]:
+            before_turn = before_move[3]
+            after_turn  =  board[3]        
+            turns_set = True
+    
+    if (turns_set):
+        db = cnx.cursor()
+        ins_training_data_query = "INSERT INTO `training_data` (before_turn, after_turn, team) VALUES (%s, %s, '%s')" % (before_turn, after_turn, turn)
+        
+        db.execute(ins_training_data_query)
+        cnx.commit()
+    
+        
+def board_into_DB():
+    db = cnx.cursor()
+    db.execute("SELECT game_id FROM Game ORDER BY game_id DESC LIMIT 1;")
+    game_id = db.fetchone()[0]
+
+    ins_turn_query = """INSERT INTO `Turns` (game_id, red_piece_board, red_king_board, black_piece_board, black_king_board)
+    VALUES (%s, %s, %s, %s, %s);""" % (game_id, board[0], board[1], board[2], board[3])
+    
+    db.execute(ins_turn_query)
+    cnx.commit()
+
+def make_move(piece_index, move_to_index, board_copy):
+    
     # movement will of course be different as it is relative to starting position
     # next I am going to limit piece movement for border pieces by hard coding some border arrays and checking if piece_index in border_array:
     # if(piece_type == "RP" or piece_type == "RK"):
@@ -33,41 +76,31 @@ def make_move(piece_index, move_to_index):
     #         move_to_index = piece_index - 4
     #     elif(move == "FL" and piece_type == "BK"):
     #         move_to_index = piece_index - 6
-    def board_into_DB():
-        conn = cnx.cursor()
-        game_id = conn.execute("SELECT game_id FROM Game ORDER BY game_id DESC LIMIT 1;")
-        ins_turn_query = """INSERT INTO `Turns` (game_id, red_piece_board, red_king_board, red_team_points, black_piece_board, black_king_board, black_team_points)
-        VALUES ({}, {}, {}, {}, {}, {}, {});""".format(game_id, board[0], board[1], 1, board[2], board[3], 1)
-        conn.execute(ins_turn_query)
-        cnx.close
-
-    def king_me(board):
-        for i in range(4):
-            if (board[0] & (1<<i)):
-                board[0] ^= 1 << i
-                board[1] ^= 1 << i
-        for i in range(28, 32):
-            if (board[2] & (1<<i)):
-                board[2] ^= 1 << i
-                board[3] ^= 1 << i
-        board_into_DB()
         
-    if ((((board[0] | board[1] | board[2] | board[3]) ^ BITMASK) & (1<<move_to_index))):
-        if (board[0] & (1<<piece_index)):
-            board[0] ^= 1 << piece_index
-            board[0] ^= 1 << move_to_index
-        if (board[1] & (1<<piece_index)):
-            board[1] ^= 1 << piece_index
-            board[1] ^= 1 << move_to_index
-        if (board[2] & (1<<piece_index)):
-            board[2] ^= 1 << piece_index
-            board[2] ^= 1 << move_to_index
-        if (board[3] & (1<<piece_index)):
-            board[3] ^= 1 << piece_index
-            board[3] ^= 1 << move_to_index
+    if ((((board_copy[0] | board_copy[1] | board_copy[2] | board_copy[3]) ^ BITMASK) & (1<<move_to_index))):
+        if (board_copy[0] & (1<<piece_index)):
+            board_copy[0] ^= 1 << piece_index
+            board_copy[0] ^= 1 << move_to_index
+        if (board_copy[1] & (1<<piece_index)):
+            board_copy[1] ^= 1 << piece_index
+            board_copy[1] ^= 1 << move_to_index
+        if (board_copy[2] & (1<<piece_index)):
+            board_copy[2] ^= 1 << piece_index
+            board_copy[2] ^= 1 << move_to_index
+        if (board_copy[3] & (1<<piece_index)):
+            board_copy[3] ^= 1 << piece_index
+            board_copy[3] ^= 1 << move_to_index
 
-        king_me(board)
-        return board
+        for i in range(4):
+            if (board_copy[0] & (1<<i)):
+                board_copy[0] ^= 1 << i
+                board_copy[1] ^= 1 << i
+        for i in range(28, 32):
+            if (board_copy[2] & (1<<i)):
+                board_copy[2] ^= 1 << i
+                board_copy[3] ^= 1 << i
+
+        return board_copy
     else:
         return 0
 
@@ -155,16 +188,25 @@ def print_board():
 
 initialize_game()
 print_board()
+turn = 'R'
 game_on = True
 while game_on:
+    before_move = board.copy()
+    new_board = board.copy()
     piece_index = int(input("select a piece to move: "))
     input_move_to = int(input("select a location to move to: "))
-    new_board = make_move(piece_index, input_move_to)
-    print("this is new_board: ", new_board)
+    new_board = make_move(piece_index, input_move_to, new_board)
     if not new_board:
         print("Not a valid move!")
     else:
         board = new_board
+        board_into_DB()
+        if turn == 'R':
+            training_data_into_DB(board, before_move, turn)
+            turn = 'B'
+        else:
+            training_data_into_DB(board, before_move, turn)
+            turn = 'R'
     print_board()
     game_on = True if ((board[0] | board[1]) or (board[2] | board[3])) else False
         

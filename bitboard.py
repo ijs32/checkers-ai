@@ -55,27 +55,6 @@ def board_into_DB():
     cnx.commit()
 
 def make_move(piece_index, move_to_index, board_copy):
-    
-    # movement will of course be different as it is relative to starting position
-    # next I am going to limit piece movement for border pieces by hard coding some border arrays and checking if piece_index in border_array:
-    # if(piece_type == "RP" or piece_type == "RK"):
-    #     if (move == "FR"):
-    #         move_to_index = piece_index - 4
-    #     elif(move == "FL"):
-    #         move_to_index = piece_index - 6
-    #     elif(move == "BR" and piece_type == "RK"):
-    #         move_to_index = piece_index + 4
-    #     elif(move == "FL" and piece_type == "RK"):
-    #         move_to_index = piece_index + 6
-    # elif(piece_type == "BP" or piece_type == "BK"):
-    #     if (move == "FR"):
-    #         move_to_index = piece_index + 4
-    #     elif(move == "FL"):
-    #         move_to_index = piece_index + 6
-    #     elif(move == "BR" and piece_type == "BK"):
-    #         move_to_index = piece_index - 4
-    #     elif(move == "FL" and piece_type == "BK"):
-    #         move_to_index = piece_index - 6
         
     if ((((board_copy[0] | board_copy[1] | board_copy[2] | board_copy[3]) ^ BITMASK) & (1<<move_to_index))):
         if (board_copy[0] & (1<<piece_index)):
@@ -90,7 +69,37 @@ def make_move(piece_index, move_to_index, board_copy):
         if (board_copy[3] & (1<<piece_index)):
             board_copy[3] ^= 1 << piece_index
             board_copy[3] ^= 1 << move_to_index
-
+        # next we have a block of rules to check
+        # if piece_index in one of the king boards:
+            # is_king = True
+        # else:
+            # is_king = False
+        is_king = True
+        odd_rows = [0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27]
+        even_rows = [4,5,6,7,12,13,14,15,20,21,22,23,28,29,30,31]
+        if is_king: # will write in more logic for extra moves king can do
+            print("woooooo im the king!!!")
+        else:
+            if piece_index in odd_rows:
+                if move_to_index == ((piece_index + 4) or (piece_index + 5)):
+                    pass
+                elif move_to_index == ((piece_index + 7) or (piece_index + 9)):
+                    print("more conditions to write here")
+                    if True: # 
+                        pass
+                    else:
+                        return board_copy
+            elif piece_index in even_rows:
+                if move_to_index == ((piece_index + 4) or (piece_index + 5)):
+                    pass
+                elif move_to_index == ((piece_index + 7) or (piece_index + 9)):
+                    print("more conditions to write here")
+                    if True:
+                        pass
+                    else:
+                        return board_copy
+            print("the conditions for if not king go here")
+        # king me below
         for i in range(4):
             if (board_copy[0] & (1<<i)):
                 board_copy[0] ^= 1 << i

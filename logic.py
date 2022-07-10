@@ -54,6 +54,7 @@ def training_data_into_DB(before_move, board, player, round_num):
         
         db.execute(ins_training_data_query)
         cnx.commit()
+    
     elif (king_move):
         db = cnx.cursor()
         ins_training_data_query = "INSERT INTO `king_training_data` (before_turn, after_turn, team) VALUES ({}, {}, '{}')".format(before_turn, after_turn, player)
@@ -73,76 +74,100 @@ def training_data_into_DB(before_move, board, player, round_num):
         db.execute(ins_turn_query)
         cnx.commit()
     elif player == 'B':
-        ins_turn_query = """UPDATE `Turns` 
+        upd_turn_query = """UPDATE `Turns` 
         SET
         after_rp_board = {}, 
         after_rk_board = {}, 
         after_bp_board = {}, 
         after_bk_board = {}
         WHERE game_id = {} AND round_num = {};
-        """.format(board[0], board[1], board[2], board[3], round_num, game_id,)
+        """.format(board[0], board[1], board[2], board[3], game_id, round_num)
         
-        db.execute(ins_turn_query)
+        db.execute(upd_turn_query)
         cnx.commit()
 
-def make_move(piece_index, move_to_index, board_copy):
-        
-    if ((((board_copy[0] | board_copy[1] | board_copy[2] | board_copy[3]) ^ BITMASK) & (1<<move_to_index))):
-        if (board_copy[0] & (1<<piece_index)):
-            board_copy[0] ^= 1 << piece_index
-            board_copy[0] ^= 1 << move_to_index
-        if (board_copy[1] & (1<<piece_index)):
-            board_copy[1] ^= 1 << piece_index
-            board_copy[1] ^= 1 << move_to_index
-        if (board_copy[2] & (1<<piece_index)):
-            board_copy[2] ^= 1 << piece_index
-            board_copy[2] ^= 1 << move_to_index
-        if (board_copy[3] & (1<<piece_index)):
-            board_copy[3] ^= 1 << piece_index
-            board_copy[3] ^= 1 << move_to_index
-        # next we have a block of rules to check
-        # if piece_index in one of the king boards:
-            # is_king = True
-        # else:
-            # is_king = False
-        is_king = True
-        odd_rows = [0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27]
-        even_rows = [4,5,6,7,12,13,14,15,20,21,22,23,28,29,30,31]
-        if is_king: # will write in more logic for extra moves king can do
-            print("woooooo im the king!!!")
+def make_move(piece_index, move_to_index, board_copy, player):
+    if player == 'R':
+        if ((board_copy[0] | board_copy[1]) & (1<<piece_index)): 
+            is_king = False if (board_copy[0] & (1<<piece_index)) else True
+            pass # this block checks that you selected a square with a piece to move on Red
         else:
-            if piece_index in odd_rows:
-                if move_to_index == ((piece_index + 4) or (piece_index + 5)):
-                    pass
-                elif move_to_index == ((piece_index + 7) or (piece_index + 9)):
-                    print("more conditions to write here")
-                    if True: # 
-                        pass
-                    else:
-                        return board_copy
-            elif piece_index in even_rows:
-                if move_to_index == ((piece_index + 4) or (piece_index + 5)):
-                    pass
-                elif move_to_index == ((piece_index + 7) or (piece_index + 9)):
-                    print("more conditions to write here")
-                    if True:
-                        pass
-                    else:
-                        return board_copy
-            print("the conditions for if not king go here")
-        # king me below
-        for i in range(4):
-            if (board_copy[0] & (1<<i)):
-                board_copy[0] ^= 1 << i
-                board_copy[1] ^= 1 << i
-        for i in range(28, 32):
-            if (board_copy[2] & (1<<i)):
-                board_copy[2] ^= 1 << i
-                board_copy[3] ^= 1 << i
+            return False
+    elif player == 'B':
+        if ((board_copy[2] | board_copy[3]) & (1<<piece_index)):
+            is_king = False if (board_copy[2] & (1<<piece_index)) else True
+            pass # this block checks that you selected a square with a piece to move on black
+        else:
+            return False
 
-        return board_copy
+    if ((((board_copy[0] | board_copy[1] | board_copy[2] | board_copy[3]) ^ BITMASK) & (1<<move_to_index))): 
+        pass
     else:
-        return 0
+        return False
+
+    odd_rows = [0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27]
+    even_rows = [4,5,6,7,12,13,14,15,20,21,22,23,28,29,30,31]
+    if is_king: # will write in more logic for extra moves king can do
+        king_jumps = [piece_index+7, piece_index+9, piece_index-7, piece_index-9]
+        even_king_moves = [piece_index-4, piece_index-5, piece_index+3, piece_index+4]
+        odd_king_moves = [piece_index+4, piece_index+5, piece_index-3, piece_index-4]
+        if (move_to_index in odd_king_moves and piece_index in odd_rows):
+            pass
+        elif (move_to_index in even_king_moves and piece_index in even_rows):
+            pass
+        elif move_to_index in king_jumps:
+            if player == 'R':
+                if ((move_to_index == piece_index + 9) and ((board_copy[2] | board_copy[3]) & (1<<piece_index+4))):
+                    pass
+                elif ((move_to_index == piece_index + 7) and ((board_copy[2] | board_copy[3]) & (1<<piece_index+3))):
+                    pass
+                elif ((move_to_index == piece_index - 9) and ((board_copy[2] | board_copy[3]) & (1<<piece_index-4))):
+                    pass
+                elif ((move_to_index == piece_index - 7) and ((board_copy[2] | board_copy[3]) & (1<<piece_index-3))):
+                    pass
+                else:
+                    return False
+            elif player == 'B':
+                if ((move_to_index == piece_index + 9) and ((board_copy[0] | board_copy[1]) & (1<<piece_index+4))):
+                    pass
+                elif ((move_to_index == piece_index + 7) and ((board_copy[0] | board_copy[1]) & (1<<piece_index+3))):
+                    pass
+                elif ((move_to_index == piece_index - 9) and ((board_copy[0] | board_copy[1]) & (1<<piece_index-4))):
+                    pass
+                elif ((move_to_index == piece_index - 7) and ((board_copy[0] | board_copy[1]) & (1<<piece_index-3))):
+                    pass
+                else:
+                    return False
+    elif not is_king:
+        print("the conditions for if not king go here")
+
+    if (board_copy[0] & (1<<piece_index)):
+        board_copy[0] ^= 1 << piece_index
+        board_copy[0] ^= 1 << move_to_index
+        
+    if (board_copy[1] & (1<<piece_index)):
+        board_copy[1] ^= 1 << piece_index
+        board_copy[1] ^= 1 << move_to_index  # this block swaps the bits (or checkers pieces) after all conditions have been passed
+        
+    if (board_copy[2] & (1<<piece_index)):
+        board_copy[2] ^= 1 << piece_index
+        board_copy[2] ^= 1 << move_to_index
+        
+    if (board_copy[3] & (1<<piece_index)):
+        board_copy[3] ^= 1 << piece_index
+        board_copy[3] ^= 1 << move_to_index
+
+    # king me below
+    for i in range(4):
+        if (board_copy[0] & (1<<i)):
+            board_copy[0] ^= 1 << i
+            board_copy[1] ^= 1 << i
+    for i in range(28, 32):
+        if (board_copy[2] & (1<<i)):
+            board_copy[2] ^= 1 << i
+            board_copy[3] ^= 1 << i
+
+    return board_copy
 
 initialize_game()
 bb.print_board(board)
@@ -152,9 +177,10 @@ game_on = True
 while game_on:
     before_move = board.copy()
     new_board = board.copy()
+    print("Team {}'s move".format(player))
     piece_index = int(input("select a piece to move: "))
     input_move_to = int(input("select a location to move to: "))
-    new_board = make_move(piece_index, input_move_to, new_board)
+    new_board = make_move(piece_index, input_move_to, new_board, player)
     if not new_board:
         print("Not a valid move, try again!")
     else:

@@ -5,3 +5,6 @@ CREATE TABLE `king_training_data` (
         points SMALLINT,
         PRIMARY KEY ( data_id )
     );
+
+ALTER TABLE `king_training_data`
+    ADD COLUMN team VARCHAR(1) NOT NULL AFTER after_turn

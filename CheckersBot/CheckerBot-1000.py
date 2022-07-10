@@ -1,4 +1,8 @@
+import os
+from MySQLConn import cnx
+
 import tensorflow as tf
+from tensorflow import keras
 
 # the plan --
 # create an AI trained solely on regular piece moves to pick a move for the piece board

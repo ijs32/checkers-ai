@@ -6,10 +6,21 @@ n4 = 0b00000000000
 board = [
     0b10000000000000000000000000000000, # red king 32 bit board
     0b00000000000000000000000000000000, # red piece 32 bit board
-    0b11111111111111111111111111111111, # black king 32 bit board
-    0b11111111111111111111111111111111  # black piece 32 bit board
+    0b11111111111111111111111111111110, # black king 32 bit board
+    0b11111111111111111111111111111110  # black piece 32 bit board
 ] 
 
+move_index = 6
+piece_index = 10
+odd_king_moves = [piece_index+4, piece_index+5, piece_index-3, piece_index-4]
+if move_index in odd_king_moves:
+    pass
+else:
+    print(False)
+
+new_board = False
+if not new_board:
+    print("board was false")
 # new_board = board.copy()
 # new_board[0] = 2
 

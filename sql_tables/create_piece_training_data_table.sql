@@ -1,4 +1,4 @@
-CREATE TABLE `training_data` (
+CREATE TABLE `piece_training_data` (
         data_id INT NOT NULL AUTO_INCREMENT,
         before_turn BIGINT NOT NULL,
         after_turn BIGINT NOT NULL,

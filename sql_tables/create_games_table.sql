@@ -4,3 +4,5 @@ CREATE TABLE `Game` (
         CREATE_DATE DATE,
         PRIMARY KEY ( game_id )
     );
+
+ALTER TABLE Game

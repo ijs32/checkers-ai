@@ -5,30 +5,33 @@ n4 = 0b00000000000
 
 board = [
     0b10000000000000000000000000000000, # red king 32 bit board
-    0b11111111111100000000000000000000, # red piece 32 bit board
-    0b00000000000000000000000000000000, # black king 32 bit board
-    0b00000000000000000000111111111111  # black piece 32 bit board
+    0b00000000000000000000000000000000, # red piece 32 bit board
+    0b11111111111111111111111111111111, # black king 32 bit board
+    0b11111111111111111111111111111111  # black piece 32 bit board
 ] 
 
-new_board = board.copy()
-new_board[0] = 2
+# new_board = board.copy()
+# new_board[0] = 2
 
-print(board)
-print(new_board)
+# print(board)
+# print(new_board)
+
 # for i in range(28, 32):
 #     print(i)
 # if n1 & (1<< 0):
 #     n1 ^= 1 << 0
 #     n2 ^= 1 << 0
 
-print("combined boards: ", board[0] + board[1])
-print("single board:    ", board[1])
+game_on = True if ((board[0] or board[1]) and (board[2] or board[3])) else False
+print("this is game on: ", game_on)
+# print("combined boards: ", board[0] + board[1])
+# print("single board:    ", board[1])
 
-before_turn = 1
-after_turn = board[2]
+# before_turn = 1
+# after_turn = board[2]
 
-if(before_turn and after_turn):
-    print("hello")
+# if(before_turn and after_turn):
+#     print("hello")
 # print(bin(n1)[2:])
 # print(bin(n2)[2:])
 

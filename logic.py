@@ -1,7 +1,6 @@
-from shutil import move
 import bitboard as bb
 import datetime as dt
-from MySQLConn import cnx
+from MySQLConn.mySQLdb import cnx
 BITMASK = 0b11111111111111111111111111111111
 board = [
     0b11111111111100000000000000000000, # red piece 32 bit board
@@ -316,16 +315,13 @@ def make_move(piece_index, move_to_index, board_copy, player):
         if (board_copy[2] & (1<<i)):
             board_copy[2] ^= 1 << i
             board_copy[3] ^= 1 << i
-
+    
+    # double_jump = input("Is there a double jump option? Y/n")
+    # double_jump = True if double_jump.lower() == 'y' else False
     return board_copy, points
 
-initialize_game()
-bb.print_board(board)
-player = 'R'
-round_num = 1
-game_on = True
-while game_on:
-    before_move = board.copy()
+
+def game_tracker(board, round_num, player):
     new_board = board.copy()
     print("Team {}'s move".format(player))
     piece_index = int(input("select a piece to move: "))
@@ -334,18 +330,27 @@ while game_on:
     if not new_board:
         print("Not a valid move, try again!")
     else:
+        before_move = board.copy()
         board = new_board
-        training_data_into_DB(board, before_move, player, round_num, points)
+        training_data_into_DB(before_move, board, player, round_num, points)
         player = 'R' if player == 'B' else 'B'
         round_num += 1 if player == 'R' else 0 # we only want to increment the round num after both teams have gone
+        # if double_jump:
+        #     game_tracker(board, round_num, player)
+        # else: 
 
     bb.print_board(board)
     game_on = True if ((board[0] or board[1]) and (board[2] or board[3])) else False # if one side or the other is 0, game over
+    if game_on:
+        game_tracker(board, round_num, player)
+    if not game_on:
+        winner = 'R' if (board[0] or board[1]) else 'B' # game is over, insert winning into db
+        game_results_into_DB(winner)
+        print("AND THE WINNER IS: {} TEAM!!!".format(player))
 
-if not game_on:
-    winner = 'R' if (board[0] or board[1]) else 'B' # game is over, insert winning into db
-    game_results_into_DB(winner)
-        
+bb.print_board(board)
+initialize_game()
+game_tracker(board, round_num=1, player='B')
 
 
 

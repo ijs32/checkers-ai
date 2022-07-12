@@ -1,5 +1,5 @@
 import os
-from MySQLConn import cnx
+from MySQLConn.mySQLdb import cnx
 
 import tensorflow as tf
 from tensorflow import keras

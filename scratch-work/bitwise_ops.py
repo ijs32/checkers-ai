@@ -10,7 +10,8 @@ board = [
     0b11111111111111111111111111111110  # black piece 32 bit board
 ] 
 
-print("this is before: ", bin(4289986560))
+
+print("this is before: ", bin(7935)[2:].zfill(32))
 print("this is before: ", bin(4281860096))
 # move_index = 6
 # piece_index = 10

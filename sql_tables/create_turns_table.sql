@@ -1,4 +1,4 @@
-CREATE TABLE `Turns` (
+CREATE TABLE `turns` (
     game_id INT NOT NULL,
     turn_id INT NOT NULL AUTO_INCREMENT,
     before_rp_board BIGINT NOT NULL,
@@ -12,5 +12,5 @@ CREATE TABLE `Turns` (
     PRIMARY KEY ( turn_id, game_id )
 );
 
-ALTER TABLE `Turns`
+ALTER TABLE `turns`
     ADD COLUMN round_num INT NOT NULL AFTER turn_id -- need a non auto-incrementing value

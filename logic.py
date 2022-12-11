@@ -1,5 +1,6 @@
 import bitboard as bb
 import datetime as dt
+
 from MySQLConn.mySQLdb import cnx
 BITMASK = 0b11111111111111111111111111111111
 board = [
@@ -10,18 +11,18 @@ board = [
 ]
 def initialize_game():
     db = cnx.cursor()
-    ins_game_query = "INSERT INTO `Game` (winning_team, CREATE_DATE) VALUES ('IN PROGRESS', '{}');".format(dt.datetime.now())
+    ins_game_query = "INSERT INTO `game` (winning_team, CREATE_DATE) VALUES ('IN PROGRESS', '{}');".format(dt.datetime.now())
     
     db.execute(ins_game_query)
     cnx.commit()
 
 def game_results_into_DB(winner):
     db = cnx.cursor()
-    db.execute("SELECT game_id FROM Game ORDER BY game_id DESC LIMIT 1;")
+    db.execute("SELECT game_id FROM game ORDER BY game_id DESC LIMIT 1;")
     game_id = db.fetchone()[0]
 
     db = cnx.cursor()
-    update_game_query = "UPDATE `Game` SET winning_team = '{}' WHERE game_id = {};".format(winner, game_id)
+    update_game_query = "UPDATE `game` SET winning_team = '{}' WHERE game_id = {};".format(winner, game_id)
     
     db.execute(update_game_query)
     cnx.commit()
@@ -66,17 +67,17 @@ def training_data_into_DB(before_move, board, player, round_num, points):
     
     # get the current match assuming im the only one playing and there arent concurrent games going on
     db = cnx.cursor()
-    db.execute("SELECT game_id FROM Game ORDER BY game_id DESC LIMIT 1;")
+    db.execute("SELECT game_id FROM game ORDER BY game_id DESC LIMIT 1;")
     game_id = db.fetchone()[0]
 
     if player == 'R':
-        ins_turn_query = """INSERT INTO `Turns` (game_id, round_num, before_rp_board, before_rk_board, before_bp_board, before_bk_board)
+        ins_turn_query = """INSERT INTO `turns` (game_id, round_num, before_rp_board, before_rk_board, before_bp_board, before_bk_board)
         VALUES ({}, {}, {}, {}, {}, {});""".format(game_id, round_num, board[0], board[1], board[2], board[3])
         
         db.execute(ins_turn_query)
         cnx.commit()
     elif player == 'B':
-        upd_turn_query = """UPDATE `Turns` 
+        upd_turn_query = """UPDATE `turns` 
         SET
         after_rp_board = {}, 
         after_rk_board = {}, 
@@ -351,8 +352,6 @@ def game_tracker(board, round_num, player):
 bb.print_board(board)
 initialize_game()
 game_tracker(board, round_num=1, player='B')
-
-
 
 
 

@@ -1,7 +1,7 @@
 import bitboard as bb
 import datetime as dt
-
 from MySQLConn.mySQLdb import cnx
+
 BITMASK = 0b11111111111111111111111111111111
 board = [
     0b11111111111100000000000000000000, # red piece 32 bit board

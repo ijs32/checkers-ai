@@ -1,6 +1,7 @@
 import bitboard as bb
-import datetime as dt
-from MySQLConn.mySQLdb import cnx
+from MySQLConn.mySQLdb import engine
+from game_tracker import TrackGame
+from sqlalchemy import text
 
 BITMASK = 0b11111111111111111111111111111111
 board = [
@@ -9,25 +10,9 @@ board = [
     0b00000000000000000000111111111111, # black piece 32 bit board
     0b00000000000000000000000000000000  # black king 32 bit board
 ]
-def initialize_game():
-    db = cnx.cursor()
-    ins_game_query = "INSERT INTO `game` (winning_team, CREATE_DATE) VALUES ('IN PROGRESS', '{}');".format(dt.datetime.now())
-    
-    db.execute(ins_game_query)
-    cnx.commit()
 
-def game_results_into_DB(winner):
-    db = cnx.cursor()
-    db.execute("SELECT game_id FROM game ORDER BY game_id DESC LIMIT 1;")
-    game_id = db.fetchone()[0]
 
-    db = cnx.cursor()
-    update_game_query = "UPDATE `game` SET winning_team = '{}' WHERE game_id = {};".format(winner, game_id)
-    
-    db.execute(update_game_query)
-    cnx.commit()
-
-def training_data_into_DB(before_move, board, player, round_num, points):
+def training_data_into_DB(before_move, board, player, round_num, points, current_game):
     king_move = False
     piece_move = False
     if player == 'R':
@@ -50,44 +35,61 @@ def training_data_into_DB(before_move, board, player, round_num, points):
             king_move = True
     
     if (piece_move):
-        db = cnx.cursor()
-        ins_training_data_query = """INSERT INTO `piece_training_data` (before_turn, after_turn, team, points) VALUES 
-        ({}, {}, '{}', {})""".format(before_turn, after_turn, player, points)
-        
-        db.execute(ins_training_data_query)
-        cnx.commit()
-    
+        ins_training_data_query = text("""INSERT INTO piece_training_data (before_turn, after_turn, team, points) VALUES 
+        (:before_turn, :after_turn, :player, :points)""")
     elif (king_move):
-        db = cnx.cursor()
-        ins_training_data_query = """INSERT INTO `king_training_data` (before_turn, after_turn, team, points) VALUES 
-        ({}, {}, '{}', {})""".format(before_turn, after_turn, player, points)
-        
-        db.execute(ins_training_data_query)
-        cnx.commit()
+        ins_training_data_query = text("""INSERT INTO `king_training_data` (before_turn, after_turn, team, points) VALUES 
+        (:before_turn, :after_turn, :player, :points)""")
     
-    # get the current match assuming im the only one playing and there arent concurrent games going on
-    db = cnx.cursor()
-    db.execute("SELECT game_id FROM game ORDER BY game_id DESC LIMIT 1;")
-    game_id = db.fetchone()[0]
+    params={"before_turn": before_turn, "after_turn": after_turn, "player": player, "points": points}
+    with engine.connect() as conn:
+        result = conn.execute(ins_training_data_query, params)
+        conn.commit()
+        if result.rowcount < 1:
+            raise Exception("Insert failed")
 
     if player == 'R':
-        ins_turn_query = """INSERT INTO `turns` (game_id, round_num, before_rp_board, before_rk_board, before_bp_board, before_bk_board)
-        VALUES ({}, {}, {}, {}, {}, {});""".format(game_id, round_num, board[0], board[1], board[2], board[3])
+        ins_turn_query = text("""INSERT INTO `turns` (game_id, round_num, before_rp_board, before_rk_board, before_bp_board, before_bk_board)
+        VALUES (:game_id, :round_num, :before_rp_board, :before_rk_board, :before_bp_board, :before_bk_board);""")
         
-        db.execute(ins_turn_query)
-        cnx.commit()
+        params={
+            "game_id": current_game.game_id, 
+            "round_num": round_num, 
+            "before_rp_board":  board[0], 
+            "before_rk_board": board[1], 
+            "before_bp_board": board[2],
+            "before_bk_board": board[3],
+        }
+        with engine.connect() as conn:
+            result = conn.execute(ins_turn_query, params)
+            conn.commit()
+            if result.rowcount < 1:
+                raise Exception("Insert failed")
+            
     elif player == 'B':
-        upd_turn_query = """UPDATE `turns` 
+        upd_turn_query = text("""UPDATE `turns` 
         SET
-        after_rp_board = {}, 
-        after_rk_board = {}, 
-        after_bp_board = {}, 
-        after_bk_board = {}
-        WHERE game_id = {} AND round_num = {};
-        """.format(board[0], board[1], board[2], board[3], game_id, round_num)
+        after_rp_board = :after_rp_board, 
+        after_rk_board = :after_rk_board,
+        after_bp_board = :after_bp_board,
+        after_bk_board = :after_bk_board
+        WHERE game_id = :game_id AND round_num = :round_num;
+        """)
         
-        db.execute(upd_turn_query)
-        cnx.commit()
+        params={
+            "game_id": current_game.game_id, 
+            "round_num": round_num, 
+            "after_rp_board": board[0], 
+            "after_rk_board": board[1], 
+            "after_bp_board": board[2],
+            "after_bk_board": board[3],
+        }
+        with engine.connect() as conn:
+            result = conn.execute(upd_turn_query, params)
+            conn.commit()
+            if result.rowcount < 1:
+                raise Exception("Insert failed")
+
 
 def make_move(piece_index, move_to_index, board_copy, player):
     points = 0
@@ -322,7 +324,7 @@ def make_move(piece_index, move_to_index, board_copy, player):
     return board_copy, points
 
 
-def game_tracker(board, round_num, player):
+def game_tracker(board, current_game, round_num, player):
     new_board = board.copy()
     print("Team {}'s move".format(player))
     piece_index = int(input("select a piece to move: "))
@@ -333,7 +335,7 @@ def game_tracker(board, round_num, player):
     else:
         before_move = board.copy()
         board = new_board
-        training_data_into_DB(before_move, board, player, round_num, points)
+        training_data_into_DB(before_move, board, player, round_num, points, current_game)
         player = 'R' if player == 'B' else 'B'
         round_num += 1 if player == 'R' else 0 # we only want to increment the round num after both teams have gone
         # if double_jump:
@@ -346,12 +348,12 @@ def game_tracker(board, round_num, player):
         game_tracker(board, round_num, player)
     if not game_on:
         winner = 'R' if (board[0] or board[1]) else 'B' # game is over, insert winning into db
-        game_results_into_DB(winner)
+        current_game(winner)
         print("AND THE WINNER IS: {} TEAM!!!".format(player))
 
 bb.print_board(board)
-initialize_game()
-game_tracker(board, round_num=1, player='B')
+current_game = TrackGame()
+game_tracker(board, current_game, round_num=1, player='B')
 
 
 

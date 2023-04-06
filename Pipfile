@@ -4,10 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-mysqlconn = "*"
+mysql-connector-python = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
-python_full_version = "3.8.0"
+python_version = "3.9"
